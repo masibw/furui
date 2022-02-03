@@ -1,0 +1,52 @@
+name: Test
+on: push
+
+jobs:
+  test:
+    name: Test local sources
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Set up Go 1.16.4
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.4
+      - uses: actions/checkout@v2
+      - name: Restore cache
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys:  ${{ runner.os }}-go-
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+      - name: install bpftrace
+        run: sudo apt-get install -y bpftrace
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ github.ref }}-${{ github.sha }}
+            ${{ github.ref }}
+            refs/head/master
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./Dockerfile.tests
+          builder: ${{ steps.buildx.outputs.name }}
+          push: false
+          load: true
+          tags: furui-test:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+      - name: Get dependencies
+        run: go mod download
+      - name: Run nginx containers for tests
+        run: make test-up
+      - name: Run test
+        run: docker run --privileged --network=host --pid=host -v $(pwd):/furui  -v /sys/kernel/debug:/sys/kernel/debug:rw -v /lib/modules:/lib/modules:ro  -v /usr/src:/usr/src:ro -v /sys/fs/bpf:/sys/fs/bpf furui-test make test-short

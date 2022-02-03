@@ -1,0 +1,22 @@
+{
+	"mocks": {
+		"cmd/mock/router.go": {
+			"checksum": "OIHVqYE6VLvR3T/QcSyO9g==",
+			"source_checksum": "DC5yvMPV8gP97ye2toBAcw==",
+			"mode": "SOURCE_MODE",
+			"source_mode_runner": {
+				"source": "cmd/router.go",
+				"destination": "cmd/mock/router.go"
+			}
+		},
+		"cmd/mock/loader.go": {
+			"checksum": "TkCHxKL1mEfV/lyekRnfiQ==",
+			"source_checksum": "zWKN32RL2I0aH0dO3Vheaw==",
+			"mode": "SOURCE_MODE",
+			"source_mode_runner": {
+				"source": "cmd/loader.go",
+				"destination": "cmd/mock/loader.go"
+			}
+		}
+	}
+}

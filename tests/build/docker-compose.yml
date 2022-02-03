@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  nginx_test:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    container_name: nginx_test
+    networks:
+      furui-test:
+        ipv4_address: 192.168.4.2
+        ipv6_address: fd00::2:2
+
+  httpd_test:
+    build:
+      context: .
+      dockerfile: ./httpd/Dockerfile
+    container_name: httpd_test
+    networks:
+      furui-test:
+        ipv4_address: 192.168.4.3
+        ipv6_address: fd00::2:3
+
+
+networks:
+  furui-test:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: 192.168.4.0/24
+        - subnet: fd00::2:0/112

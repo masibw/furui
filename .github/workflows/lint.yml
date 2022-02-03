@@ -1,0 +1,16 @@
+name: Lint
+on: push
+
+jobs:
+  lint:
+    name: Lint codes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.40
+          args: --enable=staticcheck,stylecheck,gosimple,gosec,prealloc,gocognit,bodyclose,gofmt
+      - name: run clang-format
+        run: clang-format --dry-run --Werror usecase/ebpf/*.c

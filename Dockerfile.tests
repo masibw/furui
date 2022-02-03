@@ -1,0 +1,27 @@
+FROM ubuntu:20.04
+ENV GOVERSION 1.16.4
+ENV PATH /usr/local/go/bin:$PATH
+ENV DEBIAN_FRONTEND=noninteractive
+ARG LLVM_VERSION="8"
+ENV LLVM_VERSION=$LLVM_VERSION
+
+RUN apt update && apt install -y curl wget sudo tzdata kmod bison build-essential cmake flex git libedit-dev python zlib1g-dev libelf-dev netcat curl libfl-dev binutils libelf1 util-linux binutils-dev g++ libiberty-dev libbfd-dev clang-${LLVM_VERSION} libclang-${LLVM_VERSION}-dev  libclang-common-${LLVM_VERSION}-dev libclang1-${LLVM_VERSION} llvm-${LLVM_VERSION} llvm-${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-runtime libllvm${LLVM_VERSION} systemtap-sdt-dev iproute2 ethtool arping netperf iperf iputils-ping bridge-utils libtinfo5 libtinfo-dev
+
+# Install bcc
+RUN git clone https://github.com/iovisor/bcc.git \
+    && mkdir bcc/build; cd bcc/build \
+    && cmake .. \
+    && make -j 9 \
+    && sudo make -j 9 install \
+    && cmake -DPYTHON_CMD=python3 .. # build python3 binding \
+    && pushd src/python/ \
+    && make -j 9 \
+    && sudo make -j 9 install
+
+# Install go
+RUN wget https://golang.org/dl/go${GOVERSION}.linux-amd64.tar.gz \
+    && sudo tar -C /usr/local -xzf go${GOVERSION}.linux-amd64.tar.gz
+
+WORKDIR /furui
+
+CMD ["/bin/bash"]

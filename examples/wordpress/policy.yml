@@ -1,0 +1,40 @@
+policies:
+  - container:
+      name: "furui_wordpress"
+    communications:
+      - executable: "apache2"
+        sockets:
+          - protocol: "tcp"
+            remote_host: "furui_db"
+            remote_port: 3306
+          - protocol: "tcp"
+            remote_host: "downloads.wordpress.org"
+            remote_port: 443
+          - protocol: "tcp"
+            remote_host: "api.wordpress.org"
+            remote_port: 443
+          - protocol: "tcp"
+            remote_host: "wordpress.org"
+          - protocol: "tcp"
+            local_port: 80
+      - executable: "php"
+        sockets:
+          - protocol: "tcp"
+            remote_host: "furui_db"
+            remote_port: 3306
+          - protocol: "tcp"
+            remote_host: "downloads.wordpress.org"
+            remote_port: 443
+          - protocol: "tcp"
+            remote_host: "api.wordpress.org"
+            remote_port: 443
+          - protocol: "tcp"
+            remote_host: "wordpress.org"
+  - container:
+      name: "furui_db"
+    communications:
+      - executable: "mysqld"
+        sockets:
+          - protocol: "tcp"
+            remote_host: "furui_wordpress"
+            local_port: 3306
