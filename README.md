@@ -13,7 +13,7 @@ This system has several problems and is not recommended for use in a production 
 
 # Operation check environment
 
-- OS: VERSION="20.04.3 LTS (Focal Fossa)"
+- OS: Ubuntu 20.04.3 LTS (Focal Fossa)
 - kernel version: 5.10.0-051000-generic
 - [bcc](https://github.com/iovisor/bcc)(commit hash: 220c6dc6bb62c79d5eff49efa5c98e786bf62d4a)
 - Docker: Docker version 20.10.9, build c2ea9bc
