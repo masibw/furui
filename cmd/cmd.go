@@ -70,9 +70,13 @@ loop:
 			log.Logger.Infof("the signal received")
 			break loop
 		case cid := <-runCh:
-			go containerHandler.AddDockerContainerInspection(cid, containers, policies, l)
+			policiesChan := make(chan []*entity.Policy)
+			go containerHandler.AddDockerContainerInspection(cid, containers, l, policyRepository, policies, policiesChan)
+			policies = <-policiesChan
 		case cid := <-killCh:
-			go containerHandler.RemoveDockerContainerInspection(cid, containers)
+			policiesChan := make(chan []*entity.Policy)
+			go containerHandler.RemoveDockerContainerInspection(cid, containers, policyRepository, policies, policiesChan)
+			policies = <-policiesChan
 		case cid := <-runErrCh:
 			log.Logger.Infof("an error occurred when starting the container: %s", cid)
 		}
