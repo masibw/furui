@@ -6,7 +6,7 @@ const (
 
 	TaskCommLen int = 16
 	// ContainerIDLen is 12 bytes because docker sets the hostname to the first 12 characters of the container ID
-	// https://githui.com/moby/moby/blob/2773f81aa5e9e34733675a7aa7e4219391caccb0/daemon/container.go#L199-L204
+	// https://github.com/moby/moby/blob/2773f81aa5e9e34733675a7aa7e4219391caccb0/daemon/container.go#L199-L204
 	ContainerIDLen int = 12
 
 	// ContainerIDCap is the capacity of the array considering the memory alignment
