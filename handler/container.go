@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"furui/constant"
 	"furui/domain/entity"
 	"furui/infrastructure/docker"
 	"furui/infrastructure/loader"
 	"furui/infrastructure/log"
+	policyInfra "furui/infrastructure/policy"
 	containerRepo "furui/infrastructure/repository/interface/container"
 	policyRepo "furui/infrastructure/repository/interface/policy"
 	"furui/infrastructure/repository/interface/process"
@@ -22,13 +24,12 @@ func NewContainer(docker docker.Docker, repo containerRepo.Repository, processRe
 	return &container{docker: docker, repo: repo, processRepo: processRepo, policyRepo: policyRepo}
 }
 
-func (h container) AddDockerContainerInspection(cid string, containers *entity.Containers, policies []*entity.Policy, loader loader.Loader) {
+func (h container) AddDockerContainerInspection(cid string, containers *entity.Containers, loader loader.Loader, policyRepository policyRepo.Repository, policies []*entity.Policy, policiesChan chan []*entity.Policy) {
 	container := entity.NewContainer()
 
 	err := h.docker.SetContainerInspect(container, cid)
 	if err != nil {
-		log.Logger.Errorf("failed to add the container inspection: %s", err.Error())
-		return
+		log.Logger.Warnf("failed to add the container inspection: %s", err.Error())
 	}
 
 	containers.Add(container)
@@ -40,11 +41,30 @@ func (h container) AddDockerContainerInspection(cid string, containers *entity.C
 		return
 	}
 
+	if err = policyRepository.Delete(policies); err != nil {
+		log.Logger.Fatalf("failed to delete policies : %+v", err)
+		return
+	}
+
+	// Load policies from policyPath
+	policies, err = policyInfra.LoadPolicy(constant.PolicyPath, containers)
+	if err != nil {
+		log.Logger.Fatalf("failed to load policy path: %s , error: %+v", constant.PolicyPath, err)
+		return
+	}
+
+	log.Logger.Infof("success to load policy: %+v", policies)
+
 	policies, err = policy.ArrangePolicy(policies, containers)
 	if err != nil {
 		log.Logger.Errorf("failed to arrange policies: %s", err.Error())
+	}
+
+	if err = policyRepository.Save(policies); err != nil {
+		log.Logger.Fatalf("failed to store policies : %+v", err)
 		return
 	}
+
 	// TODO: It's not possible with the current functionality to check the veth of the container you started, so I'm reattaching it to everything https://github.com/moby/moby/issues/17064
 	// Re-attach the program to all interfaces.
 	_, _, _, _, err = loader.AttachProgsToQdisc()
@@ -60,14 +80,39 @@ func (h container) AddDockerContainerInspection(cid string, containers *entity.C
 		log.Logger.Errorf("failed to save policies to ebpf map: %s", err.Error())
 		return
 	}
+
+	policiesChan <- policies
 }
 
-func (h container) RemoveDockerContainerInspection(cid string, containers *entity.Containers) {
+func (h container) RemoveDockerContainerInspection(cid string, containers *entity.Containers, policyRepository policyRepo.Repository, policies []*entity.Policy, policiesChan chan []*entity.Policy) {
 	container := containers.Get(cid)
 
 	err := h.repo.RemoveIDFromIPs(container)
 	if err != nil {
-		log.Logger.Errorf("failed to delete container from ebpf map: %s", err.Error())
+		log.Logger.Warnf("failed to delete container from ebpf map: %s", err.Error())
+	}
+
+	if err = policyRepository.Delete(policies); err != nil {
+		log.Logger.Fatalf("failed to delete policies : %+v", err)
+		return
+	}
+
+	// Load policies from policyPath
+	policies, err = policyInfra.LoadPolicy(constant.PolicyPath, containers)
+	if err != nil {
+		log.Logger.Fatalf("failed to load policy path: %s , error: %+v", constant.PolicyPath, err)
+		return
+	}
+
+	log.Logger.Infof("success to load policy: %+v", policies)
+
+	policies, err = policy.ArrangePolicy(policies, containers)
+	if err != nil {
+		log.Logger.Warnf("failed to arrange policies: %s", err.Error())
+	}
+
+	if err = policyRepository.Save(policies); err != nil {
+		log.Logger.Fatalf("failed to store policies : %+v", err)
 		return
 	}
 
@@ -75,4 +120,5 @@ func (h container) RemoveDockerContainerInspection(cid string, containers *entit
 
 	containers.Remove(cid)
 	log.Logger.Infof("the container inspection removed: %s", cid)
+	policiesChan <- policies
 }

@@ -1,6 +1,9 @@
 package constant
 
 const (
+	// PolicyPath is the path of the policy.
+	PolicyPath string = "policy.yml"
+
 	TaskCommLen int = 16
 	// ContainerIDLen is 12 bytes because docker sets the hostname to the first 12 characters of the container ID
 	// https://github.com/moby/moby/blob/2773f81aa5e9e34733675a7aa7e4219391caccb0/daemon/container.go#L199-L204

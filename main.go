@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"furui/cmd"
+	"furui/constant"
 	"furui/domain/entity"
 	"furui/driver"
 	"furui/infrastructure/docker"
@@ -41,10 +42,6 @@ var (
 	icmpEgressProg []byte
 )
 
-var (
-	policyPath = "./policy.yml"
-)
-
 func main() {
 	dockerInfra := docker.New(driver.DockerCLI())
 
@@ -58,9 +55,9 @@ func main() {
 	log.Logger.Infof("success to get containers information: %+v", containers)
 
 	// Load policies from policyPath
-	policies, err := policy.LoadPolicy(policyPath, containers)
+	policies, err := policy.LoadPolicy(constant.PolicyPath, containers)
 	if err != nil {
-		log.Logger.Fatalf("failed to load policy path: %s , error: %+v", policyPath, err)
+		log.Logger.Fatalf("failed to load policy path: %s , error: %+v", constant.PolicyPath, err)
 		return
 	}
 
